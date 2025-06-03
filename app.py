@@ -1,18 +1,28 @@
-from flask import Flask, render_template, request, session, redirect
+from flask import Flask, render_template, request, session, redirect, flash,url_for
 import sqlite3
 
 app = Flask(__name__)
 app.secret_key = "mi_clave_secreta_para_sesiones_123"
 
-#vista de inicio 
+#proceso de inicio 
 @app.route("/")
 def inicio():
     if "usuario" in session:
-        return f"Hola, {session['usuario']}!  <a href='/logout'>Cerrar sesión</a>"
-    return "Bienvenido. <a href='/registro'>Registrarse</a> |  <a href='/login'>Iniciar sesion</a>"
+        return redirect("/dashboard")
+    return redirect("/login")
+
+
+@app.route("/dashboard")
+def dashboard():
+    if "usuario" not in session:
+        return redirect("/login")
+    
+    usuario = session["usuario"]
+    return render_template('dashboard.html', usuario= usuario )
+
 
 #vista de registro
-@app.route("/registro")
+@app.route("/registro", methods=["GET"])
 def registro():
     return render_template('registro.html');
 
@@ -23,19 +33,25 @@ def registrar():
     contraseña = request.form["contraseña"]
 
     if not usuario or not contraseña:
-        return 'Por favor llena todos los campos.'
+        flash("Por favor llena todos los campos.")
+        return redirect(url_for('registro'))
     
     try:
-        conexion = sqlite3.connect('usuarios.db')
-        cursor = conexion.cursor()
-        cursor.execute("INSERT INTO usuarios (usuario, contrasena) VALUES (?, ?)", (usuario, contraseña))
-        conexion.commit()
-        conexion.close()
-        return f"!Usuario {usuario} registrado exitosamente!"
+        with sqlite3.connect("usuarios.db") as conexion:          
+         cursor = conexion.cursor()
+         cursor.execute("INSERT INTO usuarios (usuario, contrasena) VALUES (?, ?)", (usuario, contraseña))
+         conexion.commit()
+
+        flash(f"¡Usuario {usuario}, registrado exitosamente!")
+        return redirect(url_for('login'))
+    
     except sqlite3.IntegrityError:
-        return "Ese nombre de usuario ya existe."
+        flash("Ese nombre de usuario ya existe")
+        return redirect(url_for('registro'))
+    
     except Exception as e:
-        return f"Error: {e}"
+        flash(f"Error: {e}") 
+        return redirect(url_for('registro'))
 
 #vista de login
 @app.route("/login", methods=["GET", "POST"])
@@ -46,17 +62,18 @@ def login():
     usuario = request.form["usuario"]
     contraseña = request.form["contraseña"]
 
-    conexion = sqlite3.connect("usuarios.db")
-    cursor = conexion.cursor()
-    cursor.execute("SELECT * FROM usuarios WHERE usuario = ? AND contrasena = ? ", (usuario,contraseña))
-    resulado = cursor.fetchone()
-    conexion.close()
+    with sqlite3.connect("usuarios.db") as conexion:
+        cursor = conexion.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE usuario = ? AND contrasena = ?", (usuario, contraseña))
+        resultado = cursor.fetchone()
 
-    if resulado:
-        session["usuario"] = usuario
-        return redirect("/")
-    else:
-        return "Credenciales incorrectas.  <a href='/login'>Intenta de nuevo</a> "
+        if resultado:
+            session["usuario"] = usuario
+            return redirect("/dashboard")
+        else:
+            flash("Credenciales incorrectas")
+            return redirect(url_for('login'))
+ 
  
 @app.route("/logout")
 def logout():

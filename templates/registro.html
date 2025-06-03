@@ -1,22 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Registo de usuario</h1>
-    <form action="/registrar" method="post">
-        <label for="usuario">Nombre de usuario:</label>
-        <input type="text" name="usuario"> <br><br>
 
-        <label for="contraseña">Contraseña:</label>
-        <input type="password" name="contraseña"> <br><br>
+  <!-- Mostrar mensajes flash -->
+    {% with mensajes = get_flashed_messages() %}
+      {% if mensajes %}
+        <ul class="mensajes">
+          {% for mensaje in mensajes %}
+            <li class="flash-mensaje{% if 'error' in mensaje.lower() or 'existe' or in mensaje.lower() %} flash-error{% endif %}">
+              {{ mensaje }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
 
-        <button type="submit">Registrarse</button>
-    </form>
-    
+    <div class="container">
+        <h2>Registro de Usuario</h2>
+        <form method="POST" action="/registrar">
+            <label for="usuario">Usuario</label>
+            <input type="text" name="usuario" required>
+
+            <label for="contraseña">Contraseña</label>
+            <input type="password" name="contraseña" required>
+
+            <button type="submit">Registrarse</button>
+        </form>
+        <a href="/login">¿Ya tienes cuenta? Inicia sesión</a>
+    </div>
 </body>
 </html>
-
