@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, flash,url_for
-import sqlite3, bcrypt
+import sqlite3, bcrypt, random
 
 app = Flask(__name__)
 app.secret_key = "mi_clave_secreta_para_sesiones_123"
@@ -59,7 +59,6 @@ def registrar():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
-        import random
         num1 = random.randint(1, 10)
         num2 = random.randint(1, 10)
         valor = num1 + num2
@@ -86,12 +85,31 @@ def login():
     if resultado:
         contraseña_dba = resultado[2]
         if bcrypt.checkpw(contraseña.encode('utf-8'), contraseña_dba.encode('utf-8')):
+            #Gerneracion de otp
+            otp = random.randint(100000,999999)
             session["usuario"] = usuario
-            return redirect("/dashboard")
+            session["otp"] = str(otp)
+
+            print(f"[DEBUG] OTP generado para el {usuario}: {otp}")
+
+            return redirect("/verificar_otp")
 
     flash("Credenciales incorrectas")
     return redirect(url_for('login'))
 
+
+@app.route("/verificar_otp", methods = ["GET","POST"])
+def verificar_otp():
+    if request.method == "POST":
+        otp_usuario = request.form["otp"]
+        if otp_usuario == str(session.get("otp")):
+            session.pop("otp", None)
+            return redirect("/dashboard")
+        else:
+            flash("Codigo erroneo")
+            return redirect(url_for('verificar_otp'))
+    
+    return render_template('verificar_otp.html')
  
 @app.route("/logout")
 def logout():

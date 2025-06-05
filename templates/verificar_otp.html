@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Verificación OTP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='otp.css') }}">
+</head>
+<body>
+
+    <div class="otp-container">
+        <h2>Verificación de código</h2>
+        <p>Te hemos enviado un código de verificación. Ingrésalo para continuar.</p>
+        <form method="POST">
+            <input type="text" name="otp" placeholder="Código OTP" required>
+            <button type="submit">Verificar</button>
+            
+{% with mensajes = get_flashed_messages() %}
+  {% if mensajes %}
+    <ul class="mensajes">
+      {% for mensaje in mensajes %}
+        {% set clase = 'flash-mensaje' %}
+        {% if 'erroneo' in mensaje.lower() or 'existe' in mensaje.lower() %}
+          {% set clase = clase + ' flash-error' %}
+        {% endif %}
+        <li class="{{ clase }}">{{ mensaje }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+        </form>
+    </div>
+</body>
+</html>
