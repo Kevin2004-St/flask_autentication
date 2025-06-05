@@ -28,8 +28,15 @@
             <label for="contraseña">Contraseña</label>
             <input type="password" name="contraseña" required>
 
+            <label for="captcha">¿Cuánto es {{ num1 }} + {{ num2 }}?</label>
+            <input type="text" name="captcha" required>
+            <input type="hidden" name="valor" value="{{ valor }}">
+
             <button type="submit">Iniciar sesión</button>
+
         </form>
+   
+        
         <a href="/registro">¿No tienes cuenta? Regístrate</a>
     </div>
 </body>
