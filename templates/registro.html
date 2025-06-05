@@ -7,17 +7,20 @@
 <body>
 
   <!-- Mostrar mensajes flash -->
-    {% with mensajes = get_flashed_messages() %}
-      {% if mensajes %}
-        <ul class="mensajes">
-          {% for mensaje in mensajes %}
-            <li class="flash-mensaje{% if 'error' in mensaje.lower() or 'existe' or in mensaje.lower() %} flash-error{% endif %}">
-              {{ mensaje }}
-            </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+ {% with mensajes = get_flashed_messages() %}
+  {% if mensajes %}
+    <ul class="mensajes">
+      {% for mensaje in mensajes %}
+        {% set clase = 'flash-mensaje' %}
+        {% if 'error' in mensaje.lower() or 'existe' in mensaje.lower() %}
+          {% set clase = clase + ' flash-error' %}
+        {% endif %}
+        <li class="{{ clase }}">{{ mensaje }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
 
     <div class="container">
         <h2>Registro de Usuario</h2>

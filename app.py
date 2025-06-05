@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, flash,url_for
-import sqlite3
+import sqlite3, bcrypt
 
 app = Flask(__name__)
 app.secret_key = "mi_clave_secreta_para_sesiones_123"
@@ -18,7 +18,7 @@ def dashboard():
         return redirect("/login")
     
     usuario = session["usuario"]
-    return render_template('dashboard.html', usuario= usuario )
+    return render_template('dashboard.html', usuario= usuario)
 
 
 #vista de registro
@@ -35,11 +35,13 @@ def registrar():
     if not usuario or not contraseña:
         flash("Por favor llena todos los campos.")
         return redirect(url_for('registro'))
-    
+        
+
     try:
+        contrasena_hashed = bcrypt.hashpw(contraseña.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         with sqlite3.connect("usuarios.db") as conexion:          
          cursor = conexion.cursor()
-         cursor.execute("INSERT INTO usuarios (usuario, contrasena) VALUES (?, ?)", (usuario, contraseña))
+         cursor.execute("INSERT INTO usuarios (usuario, contrasena) VALUES (?, ?)", (usuario,  contrasena_hashed))
          conexion.commit()
 
         flash(f"¡Usuario {usuario}, registrado exitosamente!")
@@ -53,6 +55,7 @@ def registrar():
         flash(f"Error: {e}") 
         return redirect(url_for('registro'))
 
+
 #vista de login
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -64,12 +67,14 @@ def login():
 
     with sqlite3.connect("usuarios.db") as conexion:
         cursor = conexion.cursor()
-        cursor.execute("SELECT * FROM usuarios WHERE usuario = ? AND contrasena = ?", (usuario, contraseña))
+        cursor.execute("SELECT * FROM usuarios WHERE usuario = ? ", (usuario,))
         resultado = cursor.fetchone()
 
         if resultado:
-            session["usuario"] = usuario
-            return redirect("/dashboard")
+            contraseña_dba = resultado[2]
+            if bcrypt.checkpw(contraseña.encode('utf-8'), contraseña_dba.encode('utf-8')):
+                session["usuario"] = usuario
+                return redirect("/dashboard")
         else:
             flash("Credenciales incorrectas")
             return redirect(url_for('login'))
